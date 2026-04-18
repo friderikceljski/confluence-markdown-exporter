@@ -1,19 +1,25 @@
 {
-  "manifest_version": 3,
-  "name": "Confluence Markdown Exporter",
-  "version": "0.1.0",
-  "description": "Copy selected Confluence content as Markdown.",
-  "permissions": [
-    "contextMenus",
-    "activeTab",
-    "scripting",
-    "clipboardWrite"
-  ],
-  "background": {
-    "service_worker": "src/background.js",
-    "type": "module"
-  },
-  "action": {
-    "default_title": "Confluence Markdown Exporter"
-  }
+    "manifest_version": 3,
+    "name": "Confluence Markdown Exporter",
+    "version": "0.1.0",
+    "description": "Copy selected Confluence content as Markdown.",
+    "permissions": [
+        "contextMenus",
+        "activeTab",
+        "scripting",
+        "clipboardWrite"
+    ],
+    "background": {
+        "service_worker": "src/background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_title": "Confluence Markdown Exporter"
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
 }
