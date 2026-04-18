@@ -177,6 +177,19 @@
     const divider = header.map(() => "---");
     const bodyRows = parsed.slice(1);
 
+    // Some Confluence tables repeat the header as the first body row.
+    if (bodyRows.length > 0) {
+      const firstBodyRow = bodyRows[0] || [];
+      const sameLength = firstBodyRow.length === header.length;
+      const isRepeatedHeader =
+        sameLength &&
+        firstBodyRow.every((cell, index) => (cell || " ") === (header[index] || " "));
+
+      if (isRepeatedHeader) {
+        bodyRows.shift();
+      }
+    }
+
     const lines = [];
     lines.push(`| ${header.join(" | ")} |`);
     lines.push(`| ${divider.join(" | ")} |`);
@@ -190,6 +203,53 @@
     }
 
     return lines.join("\n");
+  }
+
+  function parseTableRows(table) {
+    const rows = Array.from(table.querySelectorAll("tr"));
+    return rows
+      .map((row) =>
+        Array.from(row.children)
+          .filter((cell) => cell.tagName === "TH" || cell.tagName === "TD")
+          .map((cell) => normalizeWhitespace(cell.textContent || ""))
+      )
+      .filter((row) => row.length > 0);
+  }
+
+  function dedupeHeaderOnlyTableArtifacts(root) {
+    const tables = Array.from(root.querySelectorAll("table"));
+    if (tables.length < 2) {
+      return;
+    }
+
+    const toRemove = [];
+
+    for (let index = 0; index < tables.length - 1; index += 1) {
+      const currentRows = parseTableRows(tables[index]);
+      const nextRows = parseTableRows(tables[index + 1]);
+
+      if (!currentRows.length || !nextRows.length) {
+        continue;
+      }
+
+      const currentHeader = currentRows[0].join("||");
+      const nextHeader = nextRows[0].join("||");
+      if (!currentHeader || currentHeader !== nextHeader) {
+        continue;
+      }
+
+      const currentHasBodyContent = currentRows.slice(1).some((row) => row.some((cell) => cell !== ""));
+      const nextHasBodyContent = nextRows.slice(1).some((row) => row.some((cell) => cell !== ""));
+
+      // Drop table clones that only contain a header while the next table has actual content.
+      if (!currentHasBodyContent && nextHasBodyContent) {
+        toRemove.push(tables[index]);
+      }
+    }
+
+    for (const table of toRemove) {
+      table.remove();
+    }
   }
 
   function convertChildrenToBlocks(element, ctx, depth) {
@@ -318,6 +378,8 @@
       const replacement = href ? `[${text}](${href})` : text;
       node.replaceWith(document.createTextNode(replacement));
     }
+
+    dedupeHeaderOnlyTableArtifacts(root);
   }
 
   function convertFragmentToMarkdown(fragment) {
